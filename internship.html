@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Internship Certificate Generator</title>
+
+<!-- Bootstrap -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<!-- Premium Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Great+Vibes&display=swap" rel="stylesheet">
+
+<!-- html2canvas & jsPDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+body{
+  background:#ececec;
+  font-family:"Playfair Display", serif;
+}
+
+/* FORM */
+.form-card{
+  background:#ffffff;
+  border-radius:12px;
+  box-shadow:0 12px 30px rgba(0,0,0,.12);
+}
+
+/* CERTIFICATE */
+#certificate{
+  background:#ffffff;
+  padding:60px;
+  position:relative;
+  border:10px solid #f57c00;
+}
+
+/* Inner border */
+#certificate::before{
+  content:"";
+  position:absolute;
+  inset:12px;
+  border:2px solid #f6b26b;
+  pointer-events:none;
+}
+
+/* Headings */
+.cert-title{
+  font-size:42px;
+  letter-spacing:6px;
+  font-weight:700;
+}
+
+.subtitle{
+  font-size:18px;
+  letter-spacing:2px;
+  margin-bottom:40px;
+}
+
+/* Candidate Name */
+.name{
+  font-size:36px;
+  font-weight:700;
+  text-decoration:underline;
+  margin:25px 0;
+}
+
+/* Text */
+.cert-text{
+  font-size:18px;
+  line-height:1.8;
+}
+
+/* Accent */
+.orange{
+  color:#f57c00;
+  font-weight:600;
+}
+
+/* Signatures */
+.signature{
+  font-family:'Great Vibes', cursive;
+  font-size:38px;
+}
+
+/* Award */
+.award img{
+  height:95px;
+}
+
+.footer-line{
+  border-top:1px solid #ccc;
+  margin-top:50px;
+}
+</style>
+</head>
+
+<body class="p-4">
+
+<div class="container-fluid">
+  <div class="row g-4">
+
+    <!-- INPUT FORM -->
+    <div class="col-md-4">
+      <div class="form-card p-4">
+        <h5 class="text-center mb-3" style="color:#f57c00;">INTERNSHIP Certificate Generator</h5>
+
+        <input class="form-control mb-2" id="candidate" placeholder="Candidate Name">
+        <input class="form-control mb-2" id="domain" placeholder="Internship Domain">
+        <input class="form-control mb-2" id="duration" placeholder="Duration (e.g. Two Months)">
+        <label class="small">Start Date</label>
+        <input class="form-control mb-2" id="start" type="date">
+        <label class="small">End Date</label>
+        <input class="form-control mb-3" id="end" type="date">
+
+        <button class="btn btn-warning w-100 mb-2" onclick="generate()">Add User Data</button>
+        <button class="btn btn-dark w-100" onclick="downloadPDF()">Download PDF</button>
+      </div>
+    </div>
+
+    <!-- CERTIFICATE -->
+    <div class="col-md-8">
+      <div id="certificate">
+
+        <!-- LOGO -->
+        <div class="text-center mb-4">
+          <img src="logo.png" height="75">
+        </div>
+
+        <!-- TITLE -->
+        <h1 class="text-center cert-title">CERTIFICATE</h1>
+        <div class="text-center subtitle">OF INTERNSHIP COMPLETION</div>
+
+        <p class="text-center cert-text">
+          This is to proudly certify that
+        </p>
+
+        <div class="name text-center" id="cName">Candidate Name</div>
+
+        <p class="text-center cert-text">
+          has successfully completed an internship in<br>
+          <span class="orange" id="cDomain">Domain</span>
+        </p>
+
+        <p class="text-center cert-text">
+          for a period of <b id="cDuration">Duration</b>,<br>
+          from <b id="cStart">Start Date</b> to <b id="cEnd">End Date</b>,<br>
+          demonstrating professionalism, dedication, and competence.
+        </p>
+
+        <!-- FOOTER -->
+        <div class="row footer-line pt-4 align-items-center mt-4">
+
+          <div class="col text-center">
+            <div class="signature">Uzair Ahmed</div>
+            <strong>Mr. Uzair Ahmed</strong><br>
+            Trainer & Digital Head
+          </div>
+
+          <div class="col text-center award">
+            <img src="award.png">
+          </div>
+
+          <div class="col text-center">
+            <div class="signature">Rahul Patel</div>
+            <strong>Mr. Rahul Patel</strong><br>
+            Managing Director<br>
+            Rent and Pe
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function generate(){
+  cName.innerText = candidate.value || "Candidate Name";
+  cDomain.innerText = domain.value || "Domain";
+  cDuration.innerText = duration.value || "Duration";
+  cStart.innerText = start.value || "Start Date";
+  cEnd.innerText = end.value || "End Date";
+}
+
+async function convertImagesToBase64(container){
+  const images = container.querySelectorAll("img");
+  for(const img of images){
+    if(img.src.startsWith("data:")) continue;
+    const res = await fetch(img.src);
+    const blob = await res.blob();
+    await new Promise(resolve=>{
+      const reader = new FileReader();
+      reader.onloadend=()=>{img.src=reader.result; resolve();}
+      reader.readAsDataURL(blob);
+    });
+  }
+}
+
+async function downloadPDF(){
+  const { jsPDF } = window.jspdf;
+  const cert = document.getElementById("certificate");
+  await convertImagesToBase64(cert);
+
+  const canvas = await html2canvas(cert,{scale:2,backgroundColor:"#fff"});
+  const img = canvas.toDataURL("image/png");
+
+  const pdf = new jsPDF("landscape","pt","a4");
+  const w = pdf.internal.pageSize.getWidth();
+  const h = pdf.internal.pageSize.getHeight();
+
+  pdf.addImage(img,"PNG",20,20,w-40,h-40);
+  pdf.save("Internship-Certificate.pdf");
+}
+</script>
+
+</body>
+</html>
